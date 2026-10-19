@@ -5,7 +5,9 @@ Open-source, modular, evidence-first OSINT/MCP investigation workspace.
 1. **OSINTNET Platform:** portable tool registry, API/MCP adapters, provenance-aware ingestion, scheduling, audit/telemetry, authenticated visual control plane, and documented skills.
 2. **Umma Foundation case:** isolated due-diligence case profile with hypotheses, reproducible evidence, charity/financial records, ads, geographic/entity matching and final public-interest findings.
 
-This initial commit is **handoff documentation only**. It does NOT deploy, install or configure any OSINT service. The implementing agent must perform independent capability discovery, choose architecture after delegation, and show verified work.
+The repository now contains an initial working Python platform: authenticated operations canvas, independently controlled GET adapters, a durable queue, replayable event stream, SHA-256 evidence ledger, full-text search and an official-SDK MCP endpoint. Investigative data stays private. Deferred integrations and unverified case claims are explicitly labeled.
+
+See [run and deployment instructions](docs/OPERATIONS.md), [architecture decision](docs/ARCHITECTURE_DECISION.md), [capability decisions](docs/CAPABILITY_MATRIX.md) and [verification evidence](docs/VERIFICATION.md). The master prompt remains the broader delivery specification; this initial implementation does not imply every acceptance condition or the investigation is complete.
 
 ## Start
 Read [MASTER_PROMPT.md](MASTER_PROMPT.md), then [AGENTS.md](AGENTS.md), [docs/SOURCE_CATALOG.md](docs/SOURCE_CATALOG.md), [cases/umma/CASE_BRIEF.md](cases/umma/CASE_BRIEF.md), and the relevant source documents. Paste the complete master prompt into ChatGPT Desktop while it has access to Loopback, GitHub, ROTOXY, and Mem0.
