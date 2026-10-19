@@ -26,6 +26,7 @@ Last preflight 2026-10-19. **Candidates, not installed adapters.** Check availab
 - CrawlGraph MCP https://github.com/pucilpet/crawlgraph-mcp ; API key is **not** among supplied credentials; quarterly snapshot and rate/paid-tier limitations.
 - Reddit via existing Arctic Shift MCP when healthy or its documented public REST API under acceptable use; archived comments may be incomplete/removed; no fabricated deleted content.
 - Google Ads Transparency Center and Meta Ad Library for published ad creatives where searchable; platform placement/targeting may remain unknowable.
+- **New ad-intelligence priority:** see [AD_INTELLIGENCE.md](AD_INTELLIGENCE.md) for verified MCP candidates, the distinction between Google public-ad libraries versus authorized-account Google Ads MCP, region filter limitations and a first lookup plan for `ummafoundation.org`.
 
 ## Passive cyber/intelligence and optional bundles
 - Existing Shodan MCP user-reported at https://shodan.ziopsyop.tech on ORA3; discover/auth/test without breaking it or exposing keys.
