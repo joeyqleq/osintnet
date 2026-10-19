@@ -29,7 +29,7 @@ function draw(){const s=state.snapshot;if(!s)return;$('#nodes').replaceChildren(
  }
  transform();
 }
-function selectNode(id){state.selected=id;draw();inspector();}
+function selectNode(id){state.selected=id;draw();inspector();if(window.matchMedia('(max-width:1400px)').matches)$('#inspector').scrollIntoView({behavior:'auto',block:'nearest'});}
 function inspector(){const panel=$('#inspector');panel.replaceChildren();const n=state.snapshot.nodes.find(n=>n.id===state.selected)||coreNodes().find(n=>n.id===state.selected);if(!n)return;
  panel.append(el('h2',n.label));const st=el('div',undefined,'status-line');st.append(el('i',undefined,'status-dot '+(n.enabled?n.state:'disabled')),el('span',n.sub||status(n)));panel.append(st,el('p',n.capability||'Local platform service. Status comes from the current server snapshot.'));
  const dl=el('dl');for(const [label,value]of [['Last observation',date(n.observed||state.snapshot.at)],['Request budget',n.budget||'Local service; no inference calls'],['Requests recorded',n.requests??'Local only'],['Source',n.source||'This workspace']]){dl.append(el('dt',label),el('dd',String(value)));}panel.append(dl);
