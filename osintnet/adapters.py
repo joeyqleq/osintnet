@@ -61,10 +61,13 @@ def validate(adapter,p):
         else:raise ValueError('supported_modes_posts_or_comments')
         return 'https://arctic-shift.photon-reddit.com'+path+'?'+urllib.parse.urlencode(q),{'arctic-shift.photon-reddit.com'},8_000_000
     if adapter=='overpass':
-        if set(p)-{'latitude','longitude','radius_m'}or not all(type(p.get(k))in(int,float)for k in('latitude','longitude')):raise ValueError('coordinates_required')
+        if set(p)-{'latitude','longitude','radius_m','categories'}or not all(type(p.get(k))in(int,float)for k in('latitude','longitude')):raise ValueError('coordinates_required')
         lat,lon=p['latitude'],p['longitude'];radius=p.get('radius_m',1609.344)
         if not(-90<=lat<=90 and -180<=lon<=180 and type(radius)in(int,float)and 1<=radius<=1609.344):raise ValueError('invalid_radius_or_coordinates')
-        query=f'[out:json][timeout:25];(nwr(around:{radius},{lat},{lon})[shop];nwr(around:{radius},{lat},{lon})[office];nwr(around:{radius},{lat},{lon})[amenity];);out center tags;'
+        categories=p.get('categories',['shop'])
+        if not isinstance(categories,list)or not 1<=len(categories)<=3 or any(type(x)is not str or x not in('shop','office','amenity')for x in categories)or len(set(categories))!=len(categories):raise ValueError('supported_place_categories_required')
+        clauses=''.join(f'nwr(around:{radius},{lat},{lon})[{category}];'for category in categories)
+        query=f'[out:json][timeout:25];({clauses});out center tags;'
         host=os.getenv('OSINTNET_OVERPASS_HOST','overpass.private.coffee')
         if host not in('overpass-api.de','overpass.private.coffee'):raise ValueError('unapproved_overpass_host')
         return 'https://'+host+'/api/interpreter?'+urllib.parse.urlencode({'data':query}),{host},10_000_000
