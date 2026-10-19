@@ -8,7 +8,7 @@ function date(t){return t?new Date(typeof t==='number'?t*1000:t).toLocaleString(
 function time(t){return new Date(t*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function money(n){return n===null||n===undefined?'Unknown':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n);}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.remove('hidden');setTimeout(()=>$('#toast').classList.add('hidden'),6000);}
-async function api(path,options={}){const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...options.headers}});if(r.status===401){location.href='/login';throw Error('Sign in required');}let d;try{d=await r.json();}catch{throw Error('Unexpected server response');}if(!r.ok)throw Error(d.detail||d.error||'Request failed');return d;}
+async function api(path,options={}){const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...options.headers}});if(r.status===401){location.href='/login';throw Error('Sign in required');}if(r.status>=500)throw Error('The gateway is temporarily unavailable (HTTP '+r.status+'). Status refresh retries automatically; submitted queries are not replayed.');let d;try{d=await r.json();}catch{throw Error('Unexpected server response');}if(!r.ok)throw Error(d.detail||d.error||'Request failed');return d;}
 function badge(value){return el('span',value,'badge '+value);}
 function sourceLink(url,label){try{if(new URL(url).protocol!=='https:')throw Error();const a=el('a',label||url);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}catch{return el('span',label||url);}}
 function transform(){$('#viewport').setAttribute('transform',`translate(${state.x} ${state.y}) scale(${state.scale})`);}
@@ -17,6 +17,7 @@ function coreNodes(){const s=state.snapshot;return[{id:'gateway',label:'OSINTNET
 function status(n){return n.pending?'Setup required':!n.enabled?'Disabled':n.state==='unknown'?'Unobserved':n.state[0].toUpperCase()+n.state.slice(1);}
 function pipe(id,x,y,tx,ty){const bend=x+(tx-x)*.55;const path=svg('path',{id,d:`M${x},${y} C${bend},${y} ${bend},${ty} ${tx},${ty}`,class:'pipe'});$('#edges').append(path);}
 function draw(){const s=state.snapshot;if(!s)return;$('#nodes').replaceChildren();$('#edges').replaceChildren();const filter=$('#node-filter').value.toLowerCase();const nodes=s.nodes.map((n,i)=>({...n,x:i<6?28:275,y:65+(i%6)*94,w:205,sub:status(n)}));
+ const cards=$('#source-cards');cards.replaceChildren();for(const n of nodes){if(filter&&!n.label.toLowerCase().includes(filter))continue;const card=el('button',undefined,'source-card'+(state.selected===n.id?' selected':''));card.append(el('strong',n.label),el('span',n.sub));card.setAttribute('aria-pressed',String(state.selected===n.id));card.onclick=()=>selectNode(n.id);cards.append(card);}
  for(const n of nodes){pipe('pipe-'+n.id,n.x+n.w,n.y+35,610,300);}
  pipe('pipe-ledger',815,300,895,245);pipe('pipe-search',997,280,997,355);pipe('pipe-reports',997,425,997,500);
  for(const [text,x,y]of [['Public sources & adapters',30,40],['Orchestration',610,240],['Evidence & analysis',895,180]])$('#nodes').append(svg('text',{x,y,class:'group-label'},text));

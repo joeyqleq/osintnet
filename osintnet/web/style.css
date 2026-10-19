@@ -12,3 +12,13 @@
 .report-text{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.7 Figtree,system-ui,sans-serif;max-width:90ch;padding-top:20px}details summary{cursor:pointer;color:var(--blue);padding:10px 0}
 
 .source-picker{display:none}@media(max-width:900px){.source-picker{display:grid;gap:6px;padding:12px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}.source-picker select{width:100%;color:var(--text);font-size:14px}}
+
+.source-cards{display:none}
+@media(max-width:900px){
+ .page-head{display:block}.summary{display:flex;gap:24px;margin-top:16px}.summary b{font-size:20px}.summary span{font-size:11px}
+ .network-layout{min-height:0}.canvas-wrap{display:none}.canvas-actions button{display:none}.canvas-actions input{width:100%}
+ .source-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;padding:14px;max-height:290px;overflow:auto;border-bottom:1px solid var(--line)}
+ .source-card{display:grid;gap:4px;text-align:left;min-height:67px;padding:10px 12px;background:#202d40;overflow-wrap:anywhere}.source-card strong{font-size:13px;font-weight:600}.source-card span{font-size:12px;color:var(--muted)}.source-card.selected{border-color:var(--accent)}
+ .inspector{border-top:0;min-height:0}.inspector-empty{padding:4px 0}.feed-row{grid-template-columns:65px minmax(75px,1fr) minmax(75px,1fr);gap:8px;overflow-wrap:anywhere}
+}
+@media(min-width:901px){.inspector{max-height:760px;overflow:auto}}
