@@ -4,6 +4,7 @@ services:
     build: .
     image: osintnet:0.1.0
     restart: unless-stopped
+    stop_grace_period: 90s
     init: true
     read_only: true
     cap_drop: [ALL]
@@ -14,6 +15,9 @@ services:
     tmpfs: ["/tmp:size=32m,noexec,nosuid"]
     ports: ["127.0.0.1:8780:8780"]
     env_file: .env
+    environment:
+      OSINTNET_WORKERS: "${OSINTNET_WORKERS:-2}"
+      OSINTNET_INSTANCE: "${OSINTNET_INSTANCE:-OSINTNET}"
     volumes: ["osintnet-data:/data"]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8780/healthz', timeout=3)"]

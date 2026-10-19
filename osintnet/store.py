@@ -35,6 +35,9 @@ class Store:
             CREATE TABLE IF NOT EXISTS places(id TEXT PRIMARY KEY,case_id TEXT NOT NULL,provider TEXT NOT NULL,source_id TEXT NOT NULL,name TEXT NOT NULL,category TEXT NOT NULL,latitude REAL NOT NULL,longitude REAL NOT NULL,distance_m REAL NOT NULL,capture_id INTEGER NOT NULL REFERENCES captures(id));
             CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,role TEXT NOT NULL,expires REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,at REAL NOT NULL,count INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS workers(adapter TEXT PRIMARY KEY,owner TEXT NOT NULL,heartbeat REAL NOT NULL,started REAL NOT NULL,generation INTEGER NOT NULL,detail TEXT NOT NULL);
+            CREATE INDEX IF NOT EXISTS events_node_id ON events(node,id);
+            CREATE INDEX IF NOT EXISTS jobs_adapter_created ON jobs(adapter,created);
             ''')
             for table in ('captures','events','assertions','edges','finance','documents','geo_centers','places'):
                 for op in ('UPDATE','DELETE'):
@@ -62,6 +65,7 @@ class Store:
         with self.db()as c:
             for m in manifest:
                 c.execute('INSERT OR IGNORE INTO nodes(id,label)VALUES(?,?)',(m['id'],m['label']))
+                c.execute('INSERT OR IGNORE INTO settings VALUES(?,?)',('worker_generation:'+m['id'],'0'))
 
     def toggle(self,node,enabled,actor):
         with self.db()as c:
@@ -106,7 +110,7 @@ class Store:
             prev=expected;count+=1
         return {'captures':count,'tip':prev,'verified':True}
 
-    def submit(self,case_id,adapter,params,key,depends_on=None):
+    def submit(self,case_id,adapter,params,key,depends_on=None,hourly_limit=None):
         payload=encoded(params);digest=hashlib.sha256(encoded([case_id,adapter,params,depends_on]).encode()).hexdigest();now=time.time()
         with self.db()as c:
             c.execute('BEGIN IMMEDIATE')
@@ -114,12 +118,13 @@ class Store:
             if old:
                 if old['input_hash']!=digest:raise ValueError('idempotency_conflict')
                 return dict(old)
+            if hourly_limit is not None and c.execute('SELECT count(*)FROM jobs WHERE adapter=?AND created>?',(adapter,now-3600)).fetchone()[0]>=hourly_limit:raise ValueError('hourly_job_limit')
             job=secrets.token_hex(12)
             c.execute('INSERT INTO jobs(id,case_id,adapter,input,idempotency,input_hash,created,updated,depends_on)VALUES(?,?,?,?,?,?,?,?,?)',(job,case_id,adapter,payload,key,digest,now,now,depends_on))
             self.event(adapter,'queued',{'job_id':job},c)
             return dict(c.execute('SELECT * FROM jobs WHERE id=?',(job,)).fetchone())
 
-    def claim(self,owner,seconds=90):
+    def claim(self,owner,seconds=90,adapter=None):
         now=time.time()
         with self.db()as c:
             c.execute('BEGIN IMMEDIATE')
@@ -127,7 +132,7 @@ class Store:
             # All current adapters are GET-only; an expired attempt can be safely retried.
             c.execute("UPDATE jobs SET state='queued',owner=NULL WHERE state='running'AND lease_until<?AND attempts<3",(now,))
             c.execute("UPDATE jobs SET state='failed',error='lease_retries_exhausted',updated=? WHERE state='running'AND lease_until<?AND attempts>=3",(now,now))
-            row=c.execute("SELECT j.* FROM jobs j JOIN nodes n ON n.id=j.adapter LEFT JOIN jobs d ON d.id=j.depends_on WHERE j.state='queued'AND n.enabled=1 AND(j.depends_on IS NULL OR d.state='complete') ORDER BY j.created LIMIT 1").fetchone()
+            row=c.execute("SELECT j.* FROM jobs j JOIN nodes n ON n.id=j.adapter LEFT JOIN jobs d ON d.id=j.depends_on WHERE j.state='queued'AND n.enabled=1 AND(? IS NULL OR j.adapter=?)AND(j.depends_on IS NULL OR d.state='complete') ORDER BY j.created LIMIT 1",(adapter,adapter)).fetchone()
             if not row:return None
             c.execute("UPDATE jobs SET state='running',owner=?,lease_until=?,updated=?,attempts=attempts+1 WHERE id=?",(owner,now+seconds,now,row['id']))
             self.event(row['adapter'],'running',{'job_id':row['id']},c)

@@ -29,4 +29,22 @@ Stage releases in separate directories and retain the previous image digest/conf
 
 ## Current limitations
 
-GET source adapters share a process and a two-worker queue; independent toggles are logical isolation. Roles span the instance's cases. There is no per-source credential editor, process-level node restart, automatic model-budget enforcement, live credit-account reader or background LLM orchestration in the core. ROTOXY dispatch is an explicit operator script with durable receipts; provider-reported cost may arrive late. Cached blobs deduplicate content but there is no HTTP response cache. Paid integrations and broad OSINT bundles remain deferred. Consult `VERIFICATION.md` for tested layers and unresolved acceptance gates.
+The base development service uses two shared workers. The production worker overlay provides separate bounded processes and independent restarts. Roles span the instance's cases. There is no per-source credential editor, automatic model-budget enforcement, live credit-account reader or background LLM orchestration in the core. ROTOXY dispatch is an explicit operator script with durable receipts; provider-reported cost may arrive late. Cached blobs deduplicate content but there is no HTTP response cache. Paid integrations and broad OSINT bundles remain deferred. Consult `VERIFICATION.md` for tested layers and unresolved acceptance gates.
+
+## Independent production source processes
+
+Run `docker compose -f compose.yaml -f compose.workers.yaml up -d --build`. Include the protected tunnel overlay as a third file for the deployed host. The base file alone retains two shared local workers. The worker overlay sets gateway acquisition workers to zero and starts seven individual source containers.
+
+Each source worker has 0.25 CPU, 192 MiB memory, 32 PIDs, a read-only root, no capabilities, bounded tmpfs/logs and no published port. With the gateway cap, configured CPU ceilings total 3.25 cores and memory ceilings total 2,112 MiB, below the measured four-core ORA6 capacity. These are ceilings, not reserved resources or load-test claims. Workers receive public-source configuration only, not Cloudflare service credentials.
+
+An admin can request “Restart worker”. A per-source generation counter lets the worker finish its current GET, record shutdown and exit; its own container restart policy starts a fresh process. It does not restart another adapter or the gateway. Worker heartbeats are separate from the last source-request result; a stale/missing worker is not displayed as a healthy enabled source. Disable prevents new claims while allowing an in-flight read to finish. Master pause prevents every new claim while leaving the console and evidence available.
+
+SSE responses have a 30-second lifetime. EventSource reconnects with Last-Event-ID; this preserves replay and permits bounded graceful shutdown. A 90-second container grace period accommodates an existing bounded GET. Before a release, pause acquisition, confirm no running jobs, back up, and recreate only the OSINTNET project.
+
+## Transfer private evidence without transferring credentials
+
+`scripts/export_workspace.py SOURCE OUTPUT --deployment` takes a consistent SQLite backup, removes sessions/rate-limit/worker runtime records, pauses acquisition and cancels pending execution in the exported copy. It verifies each blob and reuses matching read-only blobs on repeat exports. It does not copy authentication files. Archive only the database, blobs and export manifest.
+
+With the destination gateway and workers stopped, `scripts/restore_workspace.py ARCHIVE DESTINATION --expected-tip HASH` refuses a changed destination, validates archive members and the full ledger, backs up the prior DB, and preserves destination authentication files. The expected tip is a compare-before-replace guard, not a merge mechanism. Never overwrite new destination captures by substituting an old expected tip. Keep source data private; restore only into the named instance. Afterward verify the ledger, application key, Access JWT denial and authorized edge/MCP path separately.
+
+The key-file login option reads a small local key into the password form and clears the file control. The form sends the key only to this instance's sign-in endpoint. Same-origin referrers keep Chromium login compatible while external publisher links suppress referrers; null and untrusted origins remain rejected.

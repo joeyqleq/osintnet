@@ -1,24 +1,16 @@
-# Ad transparency — candidate OSINTNET skill
+---
+name: ad-transparency
+description: Inspect public Google advertising disclosures through the browser and preserve bounded, qualified observations without access to an advertiser account.
+---
 
-**Status:** Research/specification only. No MCP installed or authorized live calls executed in this handoff.
+Use the public Google Ads Transparency Center UI. This is a tested manual research capability; the automated collector/MCP node remains pending. No account, paid scraper or private advertiser credentials are required. Do not install the candidate unofficial collectors without a separate code/terms review.
 
-## Objective
-Research public advertising evidence for any named organization across Google/YouTube and selectively Meta/TikTok, particularly the Gaza fundraiser ad reported through a Jerusalem Tailscale exit-node session.
+Start with an explicitly supplied domain or advertiser name. Disambiguate the profile's legal-name text, location and disclosed identity-verification badge; record the advertiser ID without assuming an EIN or payer match. Save exact URLs and UTC observation time. Set a country, time, platform and format through visible controls. Record approximate counts as approximate and the signed-out/age-visibility limitations.
 
-## Candidate tools
-Primary: block-town/google-ads-transparency-mcp (unofficial Google Ads Transparency Center connector, no API key documented). Alternate: lionkiii/gads-transparency-mcp. Optional Meta official ad library API for eligible issue ads, with approval; paid third-party scrapers only after quotas and pricing review. Google official google-ads-mcp requires authorization to view the advertiser's own account and should not be treated as public competitor research.
+For visible cards, retain creative IDs, selected filters, format, first/last shown where published, variant count, visible copy and disclosed landing links. A country selector represents published delivery information, not advertiser-selected targeting. Leave spend, impressions, payer/EIN and private exclusions null unless explicitly disclosed with a supporting source. A preview or synthetic-looking style is not a media-authenticity verdict.
 
-## Inputs
-Advertiser domain, advertiser name/verified aliases, platform, region filter (e.g. IL, US), time window, ad status and approved rate/cost budget.
+Bound one session to 40 visible cards and two creative detail pages unless the operator supplies a larger research budget. Avoid repetitive paging, access-gate workarounds and automatic collection of iframe/tracking URLs. Never submit reports, buy ads or contact anyone. Do not infer religious or ethnic audiences from country or names.
 
-## Outputs
-Documented source, lookup time, advertiser name/ID, country filter, creative ID, type, copy, media link/hash if authorized, first/last shown if available, landing URL and verified disclosed payer if available, confidence, source gaps, nullable spend and impressions with precise restrictions. Never conflate observed ad country with selected targeting.
+Preserve rendered text/clean JSON as an **operator browser observation**, separately from original HTTP bytes. Include method, source URL, locale, time, filters, nullable fields, observed subset, uncertainty and correction history. The case assembly imports observations into the immutable ledger; old records remain intact.
 
-## Safety and accuracy
-Only published/authorized transparency material. No bypass of access gates, CAPTCHA solving, credential use for other parties' accounts, use of private platform metrics, profiling of protected groups, or inflated claims about spend/targeting. Respect platform rate limits and asset use terms; preserve immutable permitted evidence with timestamps. No keys or private data in traces.
-
-## Required tests before production
-Confirm selected server's code/license, source validity, stable time/country parsing, advertiser disambiguation, rate limit behavior, tool health, resilient failures, schema/provenance, consent for paid providers, and end-to-end dashboard health events.
-
-## Case lookup scope
-Start with `ummafoundation.org`, `Umma Foundation`, `Our Umma`, `Our Ummah`, matching advertiser IDs if found. Compare worldwide and Israel-visible indexed creatives, with independent verification of the original YouTube impression where possible.
+Validation: on 2026-10-19 the UI showed profile AR08622735789815496705 and 40 Israel-filtered cards; one selected creative showed an Israel delivery label and a last-shown date. This validates that bounded public workflow, not exhaustive inventory, original-impression matching, targeting disclosure or a production automated MCP contract. If a player is unavailable or an access gate appears, record the gap and stop that path.

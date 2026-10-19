@@ -69,6 +69,10 @@ def test_login_csrf_and_session(tmp_path,monkeypatch):
     from osintnet.app import create_app
     app=create_app(tmp_path);key=(tmp_path/'operator.key').read_text().strip()
     with TestClient(app)as client:
+        # Chromium can send Origin:null for form POSTs under no-referrer.
+        # Keep cross-origin referrers private while permitting same-origin login.
+        assert client.get('/login').headers['referrer-policy']=='same-origin'
+        assert client.post('/login',data={'key':key},headers={'Origin':'null'}).status_code==403
         assert client.post('/login',data={'key':key}).status_code==403
         r=client.post('/login',data={'key':key},headers={'Origin':'http://testserver'},follow_redirects=False)
         assert r.status_code==303

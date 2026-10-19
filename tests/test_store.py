@@ -59,3 +59,14 @@ def test_search_is_case_scoped_and_fts_operators_literal(store):
         store.capture(case.encode(),case_id=case,url='https://example.org',final_url='https://example.org',issuer='test',captured_at='2026-10-19',title=case,text='context evidence')
     assert len(store.search('evidence','a'))==1
     assert store.search('evidence OR anything','a')==[]
+
+def test_admission_ceiling_is_atomic_and_does_not_break_replay(store):
+    def submit(i):
+        try:return store.submit('case','one',{},'limited-'+str(i),hourly_limit=3)['id']
+        except ValueError as e:
+            assert str(e)=='hourly_job_limit'
+            return None
+    with concurrent.futures.ThreadPoolExecutor(8)as pool:results=list(pool.map(submit,range(8)))
+    assert sum(x is not None for x in results)==3
+    existing=store.rows('SELECT id,idempotency FROM jobs LIMIT 1')[0]
+    assert store.submit('case','one',{},existing['idempotency'],hourly_limit=3)['id']==existing['id']

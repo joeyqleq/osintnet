@@ -6,6 +6,8 @@ import json
 import os
 import re
 import shutil
+import resource
+import socket
 import time
 from pathlib import Path
 from urllib.parse import parse_qs,urlsplit
@@ -41,20 +43,30 @@ def create_app(data_dir=None):
     hosts={urlsplit(x).netloc for x in origins}|{'127.0.0.1:8780','localhost:8780'}
     mcp=MCPServer('OSINTNET',version='0.1.0',instructions='Public-source evidence. Reported assertions are not findings. No arbitrary URLs outside adapter allowlists.')
     stopping=asyncio.Event()
+    worker_count=int(os.getenv('OSINTNET_WORKERS','2'))
+    if not 0<=worker_count<=8:raise ValueError('invalid_worker_count')
 
     def snapshot():
         nodes=store.rows('SELECT * FROM nodes ORDER BY rowid')
         for n in nodes:
             m=BY_ID[n['id']];n.update({'kind':m['kind'],'capability':m['capability'],'source':m['source'],'budget':m['budget'],'pending':bool(m.get('pending')),'detail':json.loads(n['detail'])})
             n['requests']=store.rows("SELECT count(*)n FROM events WHERE node=?AND kind='request'",(n['id'],))[0]['n']
-        return {'schema_version':1,'at':time.time(),'running':store.rows("SELECT value FROM settings WHERE key='running'")[0]['value']=='true','nodes':nodes,'jobs':store.rows('SELECT id,case_id,adapter,state,created,updated,attempts,error,result FROM jobs ORDER BY created DESC LIMIT 60'),'counts':{'captures':store.rows('SELECT count(*)n FROM captures')[0]['n'],'documents':store.rows('SELECT count(*)n FROM documents')[0]['n'],'assertions':store.rows('SELECT count(*)n FROM assertions')[0]['n'],'events':store.rows('SELECT count(*)n FROM events')[0]['n']},'disk_free_bytes':shutil.disk_usage(store.root).free,'last_event':store.rows('SELECT coalesce(max(id),0)id FROM events')[0]['id']}
+            n['metrics']=store.rows("SELECT count(*) admitted, sum(state='failed') failed, sum(state='complete') complete FROM jobs WHERE adapter=?AND created>?",(n['id'],time.time()-3600))[0]
+            n['metrics']['hourly_ceiling']=100
+            n['worker']=None
+            if not worker_count and not n['pending']:
+                observed=store.rows('SELECT * FROM workers WHERE adapter=?',(n['id'],))
+                if observed:
+                    n['worker']={**observed[0],'detail':json.loads(observed[0]['detail']),'online':observed[0]['heartbeat']>time.time()-90}
+                if n['enabled']and not(n['worker']or{}).get('online'):n['state']='offline'
+            n['recent_events']=store.rows('SELECT at,kind,payload FROM events WHERE node=?ORDER BY id DESC LIMIT 8',(n['id'],))
+        return {'worker_mode':'shared'if worker_count else'dedicated','worker_count':worker_count,'schema_version':1,'at':time.time(),'running':store.rows("SELECT value FROM settings WHERE key='running'")[0]['value']=='true','nodes':nodes,'jobs':store.rows('SELECT id,case_id,adapter,state,created,updated,attempts,error,result FROM jobs ORDER BY created DESC LIMIT 60'),'counts':{'captures':store.rows('SELECT count(*)n FROM captures')[0]['n'],'documents':store.rows('SELECT count(*)n FROM documents')[0]['n'],'assertions':store.rows('SELECT count(*)n FROM assertions')[0]['n'],'events':store.rows('SELECT count(*)n FROM events')[0]['n']},'host':{'instance':os.getenv('OSINTNET_INSTANCE',socket.gethostname()),'revision':os.getenv('OSINTNET_REVISION','development'),'process_peak_rss_bytes':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,'process_cpu_seconds':round(time.process_time(),3),'logical_cpus':os.cpu_count(),'observed_at':time.time()},'disk_free_bytes':shutil.disk_usage(store.root).free,'last_event':store.rows('SELECT coalesce(max(id),0)id FROM events')[0]['id']}
 
     def submit(q):
         validate(q.adapter,q.parameters)
         if shutil.disk_usage(store.root).free<1_000_000_000:raise ValueError('disk_headroom_required')
-        # Per-node hourly admission ceiling, including retries and failed jobs.
-        if store.rows('SELECT count(*)n FROM jobs WHERE adapter=?AND created>?',(q.adapter,time.time()-3600))[0]['n']>=100:raise ValueError('hourly_job_limit')
-        return store.submit(q.case_id,q.adapter,q.parameters,q.idempotency_key,q.depends_on)
+        # Atomic new-job ceiling; replaying an existing key does not consume it.
+        return store.submit(q.case_id,q.adapter,q.parameters,q.idempotency_key,q.depends_on,hourly_limit=100)
 
     @mcp.tool()
     def network_status()->dict:
@@ -97,8 +109,8 @@ def create_app(data_dir=None):
     @contextlib.asynccontextmanager
     async def lifespan(app):
         async with transport.router.lifespan_context(transport):
-            tasks=[asyncio.create_task(worker(i))for i in range(2)]
-            store.event('gateway','started',{'workers':2})
+            tasks=[asyncio.create_task(worker(i))for i in range(worker_count)]
+            store.event('gateway','started',{'workers':worker_count})
             yield
             stopping.set()
             await asyncio.gather(*tasks,return_exceptions=True)
@@ -126,7 +138,7 @@ def create_app(data_dir=None):
         request.state.role=role;request.state.actor='key:'+hashed(token)[:12]if token else'none';context=ROLE.set(role or'analyst')
         try:response=await call_next(request)
         finally:ROLE.reset(context)
-        response.headers.update({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
+        response.headers.update({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
         return response
 
     def require(request,role):
@@ -171,8 +183,10 @@ def create_app(data_dir=None):
         try:after=max(after,int(request.headers.get('last-event-id','0')))
         except ValueError:raise HTTPException(400,'invalid_cursor')
         async def stream():
-            cursor=after
-            while not await request.is_disconnected():
+            cursor=after;deadline=time.monotonic()+30
+            # EventSource reconnects with Last-Event-ID. Bound open streams so
+            # graceful server shutdown can finish without losing the cursor.
+            while time.monotonic()<deadline and not await request.is_disconnected():
                 rows=store.rows('SELECT * FROM events WHERE id>?ORDER BY id LIMIT 100',(cursor,))
                 for row in rows:
                     cursor=row['id'];row['payload']=json.loads(row['payload']);yield f"id: {cursor}\ndata: {json.dumps(row)}\n\n"
@@ -186,6 +200,16 @@ def create_app(data_dir=None):
         if node not in BY_ID:raise HTTPException(404,'node_not_found')
         if body.enabled and BY_ID[node].get('pending'):raise HTTPException(409,'integration_pending')
         store.toggle(node,body.enabled,request.state.actor);return {'ok':True}
+
+    @app.post('/api/nodes/{node}/restart')
+    def restart(node:str,request:Request):
+        require(request,'admin')
+        if node not in BY_ID:raise HTTPException(404,'node_not_found')
+        if worker_count or BY_ID[node].get('pending'):raise HTTPException(409,'dedicated_worker_required')
+        with store.db()as c:
+            c.execute("UPDATE settings SET value=CAST(value AS INTEGER)+1 WHERE key=?",('worker_generation:'+node,))
+            store.event(node,'restart_requested',{'actor':request.state.actor},c)
+        return {'ok':True,'mode':'drain_then_restart'}
 
     @app.post('/api/control')
     def control(body:Toggle,request:Request):
@@ -217,7 +241,7 @@ def create_app(data_dir=None):
     @app.get('/api/cases/{case_id}')
     def case(case_id:str):
         if not CASE.fullmatch(case_id):raise HTTPException(400,'invalid_case')
-        return {'case_id':case_id,'finance':store.rows('SELECT * FROM finance WHERE case_id=?ORDER BY year',(case_id,)),'assertions':store.rows('SELECT * FROM assertions WHERE case_id=?ORDER BY created',(case_id,)),'entities':store.rows('SELECT * FROM entities WHERE case_id=?',(case_id,)),'edges':store.rows('SELECT * FROM edges WHERE case_id=?',(case_id,)),'geo_centers':store.rows('SELECT * FROM geo_centers WHERE case_id=?ORDER BY created DESC',(case_id,)),'places':store.rows('SELECT * FROM places WHERE case_id=?ORDER BY distance_m',(case_id,)),'captures':store.rows('SELECT id,url,issuer,captured_at,bytes,sha256 FROM captures WHERE case_id=?ORDER BY id DESC LIMIT 500',(case_id,))}
+        return {'reports':store.rows("SELECT c.id,d.title,d.text,c.captured_at FROM captures c JOIN documents d ON d.capture_id=c.id WHERE c.case_id=?AND c.issuer='case-analysis' ORDER BY c.id DESC LIMIT 3",(case_id,)),'case_id':case_id,'finance':store.rows('SELECT * FROM finance WHERE case_id=?ORDER BY year',(case_id,)),'assertions':store.rows('SELECT * FROM assertions WHERE case_id=?ORDER BY created',(case_id,)),'entities':store.rows('SELECT * FROM entities WHERE case_id=?',(case_id,)),'edges':store.rows('SELECT * FROM edges WHERE case_id=?',(case_id,)),'geo_centers':store.rows('SELECT * FROM geo_centers WHERE case_id=?ORDER BY created DESC',(case_id,)),'places':store.rows('SELECT * FROM places WHERE case_id=?ORDER BY distance_m',(case_id,)),'captures':store.rows('SELECT id,url,issuer,captured_at,bytes,sha256 FROM captures WHERE case_id=?ORDER BY id DESC LIMIT 500',(case_id,))}
 
     @app.get('/api/verify')
     def verify(request:Request):

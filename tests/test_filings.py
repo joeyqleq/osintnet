@@ -17,3 +17,9 @@ def test_xml_entities_and_wrong_forms_refused():
 def test_discrepancy_is_explicit_not_adjusted():
     data=extract_990(example().replace(b'<CYRevenuesLessExpensesAmt>20',b'<CYRevenuesLessExpensesAmt>21'))
     assert data['surplus']==21 and data['discrepancies']==['revenue_less_expenses_does_not_match_reported_surplus']
+
+def test_audit_and_accounting_disclosures_remain_distinct_from_proof():
+    data=extract_990(example('<MethodOfAccountingCashInd>X</MethodOfAccountingCashInd><FSAuditedInd>false</FSAuditedInd><OtherExpensesGrp><Desc>CONSULTANT FEE</Desc><TotalAmt>100</TotalAmt><ProgramServicesAmt>100</ProgramServicesAmt></OtherExpensesGrp>'))
+    assert data['schema_version']==2 and data['accounting_method_cash']=='X'
+    assert data['financial_statements_audited']=='false'and data['independent_audit']is None
+    assert data['other_expense_details'][0]['TotalAmt']=='100'

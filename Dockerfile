@@ -1,5 +1,8 @@
 FROM python:3.14-slim
+ARG GIT_REVISION=development
+LABEL org.opencontainers.image.revision=$GIT_REVISION
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OSINTNET_DATA=/data
+ENV OSINTNET_REVISION=$GIT_REVISION
 WORKDIR /app
 COPY requirements.lock.txt ./
 RUN pip install --no-cache-dir -r requirements.lock.txt && useradd -u 10001 -m osintnet && mkdir /data && chown osintnet /data

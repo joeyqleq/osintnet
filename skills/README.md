@@ -1,4 +1,7 @@
-# OSINTNET skills — implement after tool selection
-Each installed capability shall have its own SKILL.md describing: precise purpose, data source, auth variable names, supported endpoints, schemas, cost/rate limits, failure cases, caching, provenance and timestamps, legal restrictions, tests and working invocation examples.
+# Selected OSINTNET skills
 
-Candidate skills: nonprofit-irs, propublica, ny-ag-charities, ny-dos-entities, courtlistener, nyc-databook, places-osm, google-places, hasdata, web-crawl-archive, backlinks, reddit-arcticshift, passive-domain, shodan-passive, zoomeye-passive, entity-resolution, finance-990, graph-analytics, case-evidence, langsmith-evaluations and orchestration-supervision. Consolidate duplicates instead of installing everything.
+Seven source adapters have individual contracts: `propublica`, `irs-records`, `web-capture`, `nyc-socrata`, `places-osm`, `wayback-cdx`, and `reddit-arcticshift`.
+
+Supporting capabilities are `finance-990`, `case-evidence`, and `rotoxy-research`. Manual browser capabilities are `ad-transparency`, `ny-ag-charities`, `ny-dos-entities`, and `courtlistener`. Each file states its invocation, provenance, limits, failure behavior and verification boundary. Registry gates and errors remain unresolved source outcomes; they are not successful searches.
+
+The 14 directories pass the bundled skill validator. Runtime/source evidence is recorded separately in `docs/VERIFICATION.md`; static validation is not production integration proof. The archived initial candidate inventory remains in the source catalog and capability matrix.

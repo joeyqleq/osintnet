@@ -35,7 +35,7 @@ for f in sorted((ROOT/'irs/originals').glob('*_public.xml')):
     if data['ein']!='863883211':raise ValueError('wrong_case_identity')
     cid=capture(raw,meta,'irs-records',f'IRS original Form 990 {data["year"]}',text=json.dumps(data,indent=2),parser='irs-xml-v1')
     primary.append({**data,'capture_id':cid,'source_url':meta['url'],'archive_member':meta['archive_member'],'sha256':meta['sha256']})
-    with store.db()as c:c.execute('INSERT OR IGNORE INTO finance VALUES(?,?,?,?,?,?)',(f'umma:irs:{meta["sha256"]}',CASE,data['year'],encoded(data),cid,'IRS original XML; field-level extraction'))
+    with store.db()as c:c.execute('INSERT OR IGNORE INTO finance VALUES(?,?,?,?,?,?)',(f'umma:irs:{meta["sha256"]}:parser-v2',CASE,data['year'],encoded(data),cid,'IRS original XML; field-level extraction'))
     assertion(f'filing-{data["year"]}',f'The original {data["year"]} Form 990 reports revenue ${data["revenue"]:,}, expenses ${data["expenses"]:,}, and net assets ${data["net_assets"]:,}.','verified',cid,'ReturnData/IRS990: CYTotalRevenueAmt, CYTotalExpensesAmt, NetAssetsOrFundBalancesEOYAmt','Verified as a filing disclosure, not an independent audit of underlying transactions.')
     for person in data['officers']:
         if not person['name']:continue
