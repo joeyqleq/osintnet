@@ -2,7 +2,7 @@
 
 ## Completed checks
 
-- Current 26 Python checks pass: concurrency and unique claims, idempotency conflicts, stale-lease ownership, dependencies/master pause, adapter isolation, append-only/tamper detection, case-scoped FTS, SSRF/redirect rejection, adapter bounds, authentication/roles/origin/Host checks, cookie logout and MCP initialization/tool inventory. WGS84 one-mile boundary, privacy-scoped Reddit adapter bounds, repeat credential-free export, fenced restore, atomic admission ceilings, dedicated adapter claims, real subprocess heartbeat/restart isolation and admin-only restart requests are included.
+- Current 27 Python checks pass: concurrency and unique claims, idempotency conflicts, stale-lease ownership, dependencies/master pause, adapter isolation, append-only/tamper detection, case-scoped FTS, SSRF/redirect rejection, adapter bounds, authentication/roles/origin/Host checks, cookie logout and MCP initialization/tool inventory. WGS84 one-mile boundary, privacy-scoped Reddit adapter bounds, repeat credential-free export, fenced restore, atomic admission ceilings, dedicated adapter claims, real subprocess heartbeat/restart isolation and admin-only restart requests are included.
 - JavaScript syntax and Git whitespace checks pass for the initial console.
 - Official MCP SDK client connected over real local HTTP, listed all four tools and called `network_status` without an MCP error. This proves the native SDK/transport path, not enrollment in ChatGPT Desktop.
 - Real ProPublica source query completed through the authenticated job API: 5,521 bytes, measured approximately 801 ms, immutable capture and persisted request/health/completion events.
@@ -18,9 +18,9 @@
 
 ## Separate pending acceptance layers
 
-Authenticated in-app browser sign-in, source canvas, source disable with another source preserved, financial tables and dated role graph were exercised. A real Chromium origin rejection exposed the no-referrer form issue; same-origin referrer policy fixed login while null/untrusted origins remain blocked. Private screenshots exist. Final layout/mobile/map/search/restart browser checks are a separate remaining QA pass.
+Authenticated in-app browser sign-in, source canvas, source disable with another source preserved, financial tables and dated role graph were exercised. A real Chromium origin rejection exposed the no-referrer form issue; same-origin referrer policy fixed login while null/untrusted origins remain blocked. Private screenshots exist. The final desktop layout, source controls, full-text search and filtered map were exercised in Chromium. Selecting a near-center map point opens the correct source capture; a marker overlap bug was corrected and keyboard activation was added. Screenshots are retained privately. Mobile viewport rendering and keyboard activation itself have not been independently exercised.
 
-Cloudflare owner-only reusable policy, Access app, connected dedicated tunnel and scoped DNS route are live. Unauthenticated edge API returns 302; direct origin without JWT returns 401. A short-lived application-scoped service token without an app key reaches the app and returns authentication_required/401. With both credentials, the edge returned the 250-capture case, 622 places, all four MCP tools and a successful network_status call. Isolated restore matched all 250 hashes and ledger tip, integrity ok. Initial default urllib user agent returned 403; an explicit OSINTNET agent succeeded. Updated image, seven production worker processes and the latest 260-capture case package still require final deployment receipts. No credential is in code, screenshots or this record.
+Cloudflare owner-only reusable policy, Access app, connected dedicated tunnel and scoped DNS route are live. Unauthenticated edge API returns 302; direct origin without JWT returns 401. A short-lived application-scoped service token without an app key reaches the app and returns authentication_required/401. With both credentials, the final deployed application revision `f6df459` returned the 260-capture case, 622 places and report capture 260. MCP initialize, tools/list and network_status succeeded. All seven dedicated workers were online; a ProPublica worker restart changed its owner while the other six owners stayed unchanged. Isolated restore matched all 250 initial hashes and ledger tip, integrity ok; the subsequent guarded 260-capture restore also verified every blob and chain link while preserving destination authentication. Initial default urllib user agent returned 403; an explicit OSINTNET agent succeeded. No credential is in code, screenshots or this record.
 
 Paid/credentialed integrations, automated live account-wide quota readers, every individual source's production contract, desktop enrollment, original advertising creative/targeting, state-registry originals, complete public-court coverage, beneficiary/project corroboration and independent forensic/legal review remain distinct from the checks above. The case remains open.
 
@@ -29,3 +29,23 @@ Paid/credentialed integrations, automated live account-wide quota readers, every
 The local ledger verifies 260 captures. It includes three original IRS returns, the BMF exact-EIN match, year-specific IRS instructions, the full 223-route website capture, a 100-row CDX index and a 2011 replay with a different EIN, two bounded empty USAspending autocomplete responses, scoped Reddit records, Google advertiser/creative observations, a bounded zero-result RECAP search and a NY DOS error observation. These source outcomes have precise limits; they are not a full registry/court clearance or an exhaustive map/advertising inventory.
 
 Two opposing delegated financial reviews and one final text QA were reviewed. Final text QA cost delta was about USD 0.0173, as reported by its session. The requested final marker was absent, so completion was accepted only after idle state and the actual new assistant artifact were inspected. It found one authorship-inference wording issue; the report was corrected by adding a new ledger version. No fresh primary-source verification by that text reviewer is claimed.
+
+## Final production acceptance
+
+The receipt at 2026-10-19 08:56:57 UTC (11:56:57 Beirut) records one real query per adapter in a separate acceptance case:
+
+| Adapter | Outcome | Captured bytes | Measured request latency |
+| --- | --- | ---: | ---: |
+| ProPublica | Complete | 5,521 | 437 ms |
+| Public web | Complete | 39,461 | 163 ms |
+| IRS records | Complete | 1,225,670 | 292 ms |
+| NYC Socrata | Complete, empty response | 3 | 399 ms |
+| Overpass | Failed, HTTP 500 | — | — |
+| Wayback CDX | Complete | 16,520 | 1,825 ms |
+| Arctic Shift | Complete | 1,974 | 1,863 ms |
+
+The Overpass failure is retained; the earlier 622-place map is sourced from a successful acquisition, not this failed request. The NYC result is only the bounded query result, not proof that no business exists at the address. No provider was silently rotated. All jobs finished in one attempt. Master acquisition was paused and all seven sources disabled afterward. Six new acceptance captures bring the remote ledger to 266; the case itself remains 260 captures. All 266 hashes/chain entries verified, tip `97423aa5cc75b3af00443e0a7a8a7ac1a17b0ba00d1e933c1ce768f6556fd995`.
+
+A later resumption check on 2026-10-19 found the gateway and seven workers healthy, unrelated Open WebUI/Ollama containers still running, absent/forged origin JWTs rejected with 401, and unauthenticated edge access redirected with 302. The 27 Python tests passed again. Source-process health does not imply provider availability. Idle samples were about 66 MiB for the gateway and 21 MiB per worker, not sustained-load measurements.
+
+Authenticated local browser rendering and authenticated remote REST/MCP are separate proofs. Owner Cloudflare Access sign-in and the production browser's application login remain human acceptance steps. Temporary validation-service entitlement expires 2026-10-20 07:05:21 UTC; it does not replace the owner policy or the app key.

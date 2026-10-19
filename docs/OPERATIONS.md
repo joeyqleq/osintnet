@@ -48,3 +48,23 @@ SSE responses have a 30-second lifetime. EventSource reconnects with Last-Event-
 With the destination gateway and workers stopped, `scripts/restore_workspace.py ARCHIVE DESTINATION --expected-tip HASH` refuses a changed destination, validates archive members and the full ledger, backs up the prior DB, and preserves destination authentication files. The expected tip is a compare-before-replace guard, not a merge mechanism. Never overwrite new destination captures by substituting an old expected tip. Keep source data private; restore only into the named instance. Afterward verify the ledger, application key, Access JWT denial and authorized edge/MCP path separately.
 
 The key-file login option reads a small local key into the password form and clears the file control. The form sends the key only to this instance's sign-in endpoint. Same-origin referrers keep Chromium login compatible while external publisher links suppress referrers; null and untrusted origins remain rejected.
+
+## Deployed instance handoff (2026-10-19)
+
+The protected dashboard is `https://umma.ziopsyop.tech`. Runtime revision `f6df459` runs on ORA6 from `/home/jq/osintnet/releases/20261019-final`, with Compose project `osintnet` and volume `osintnet_osintnet-data`. Include `compose.yaml`, `compose.workers.yaml` and the existing protected `compose.tunnel.yaml` when inspecting or operating that project. Preserve the remote protected environment and tunnel overlay; they are deliberately not distributed with the repository.
+
+Complete the owner Cloudflare Access sign-in first, then use this instance's OSINTNET key. The remote admin key is inside the gateway at `/data/operator.key`; the local development key is a different credential. An authorized owner can retrieve a private login-file copy without displaying it in the terminal:
+
+```sh
+umask 077
+mkdir -p private/ora6
+ssh ora6 'docker exec osintnet-gateway-1 cat /data/operator.key' > private/ora6/operator.key
+```
+
+Choose that file in the production login form. Do not send it in chat or commit it. This command is an explicit owner action, not part of automatic evidence export or deployment. Account selection and one-time login codes remain interactive.
+
+The remote ledger has 266 captures (260 case captures plus six acceptance captures). The older local export has 260. Do not replace the remote database with that older export. Acquisition is paused, all source adapters disabled, and the console remains available. Enabling a source and master acquisition authorizes queued work; inspect the queue first.
+
+The prior application image is retained as `osintnet:rollback-ab20bc1`; the original release directory is `/home/jq/osintnet/releases/20261019`. Rollback requires the old matching Compose configuration and stopping only the seven new OSINTNET worker services before starting the old shared-worker gateway. Preserve the current data volume and back it up before any rollback; do not restore an old database merely to roll back code. Revalidate the ledger and authorization afterward. Existing Open WebUI, Ollama and other hosts' services are outside this project.
+
+The temporary validation-service entitlement expires at 2026-10-20 07:05:21 UTC. Its expiration does not remove owner access. Owner browser acceptance, desktop MCP enrollment, NY AG verification and unavailable registry/provider records remain recorded handoff gates.
