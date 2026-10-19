@@ -22,3 +22,5 @@
  .inspector{border-top:0;min-height:0}.inspector-empty{padding:4px 0}.feed-row{grid-template-columns:65px minmax(75px,1fr) minmax(75px,1fr);gap:8px;overflow-wrap:anywhere}
 }
 @media(min-width:901px){.inspector{max-height:760px;overflow:auto}}
+
+.login-box #file-error:not(:empty){padding:10px 12px;border:1px solid var(--line);border-radius:6px}.login-box #file-error[data-state="ready"]{color:var(--green)}.login-box #file-error[data-state="error"]{color:var(--amber)}

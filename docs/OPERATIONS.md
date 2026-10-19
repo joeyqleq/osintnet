@@ -47,7 +47,7 @@ SSE responses have a 30-second lifetime. EventSource reconnects with Last-Event-
 
 With the destination gateway and workers stopped, `scripts/restore_workspace.py ARCHIVE DESTINATION --expected-tip HASH` refuses a changed destination, validates archive members and the full ledger, backs up the prior DB, and preserves destination authentication files. The expected tip is a compare-before-replace guard, not a merge mechanism. Never overwrite new destination captures by substituting an old expected tip. Keep source data private; restore only into the named instance. Afterward verify the ledger, application key, Access JWT denial and authorized edge/MCP path separately.
 
-The key-file login option reads a small local key into the password form and clears the file control. The form sends the key only to this instance's sign-in endpoint. Same-origin referrers keep Chromium login compatible while external publisher links suppress referrers; null and untrusted origins remain rejected.
+The key-file login option reads a small local key into the password form and retains the selected filename with an explicit ready status. A cancelled file chooser now displays a message, and an invalid replacement clears the previous key. The form sends the key only to this instance's sign-in endpoint. Same-origin referrers keep Chromium login compatible while external publisher links suppress referrers; null and untrusted origins remain rejected.
 
 ## Deployed instance handoff (2026-10-19)
 
