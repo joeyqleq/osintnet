@@ -8,7 +8,7 @@ The latest code adds independent production source processes, fenced backup/rest
 
 Remaining external acceptance gates: NY AG human verification, NY DOS portal recovery and certified entity history, credentialed integrations/rotation and desktop-client enrollment. No underlying campaign transactions, named grant/vendor confirmations, full state-court coverage or independently verified project delivery were obtained. Live model balances/quotas and automatic inference-budget enforcement are not implemented. Do not call this a completed forensic investigation or infer wrongdoing from the gaps.
 
-Private case report: `private/umma/REPORT-2026-10-19.md`. Next human steps: complete the owner Cloudflare Access sign-in and application login, then the NY AG verification challenge. The earlier browser tabs did not survive the resumed session. Continue registry work only after the gate is satisfied; preserve the recorded NY DOS error until a new successful query supplies evidence. Do not restore the local 260-capture package over the remote 266-capture database: the latter now includes production acceptance captures. Preserve all other services.
+Private case report: `private/umma/REPORT-2026-10-19.md`. Next human steps: complete the NY AG verification challenge. Owner Cloudflare Access and production application login are now verified. The earlier browser tabs did not survive the resumed session. Continue registry work only after the gate is satisfied; preserve the recorded NY DOS error until a new successful query supplies evidence. Do not restore the local 260-capture package over the remote 266-capture database: the latter now includes production acceptance captures. Preserve all other services.
 
 ---
 
