@@ -10,6 +10,10 @@ This initial commit is **handoff documentation only**. It does NOT deploy, insta
 ## Start
 Read [MASTER_PROMPT.md](MASTER_PROMPT.md), then [AGENTS.md](AGENTS.md), [docs/SOURCE_CATALOG.md](docs/SOURCE_CATALOG.md), [cases/umma/CASE_BRIEF.md](cases/umma/CASE_BRIEF.md), and the relevant source documents. Paste the complete master prompt into ChatGPT Desktop while it has access to Loopback, GitHub, ROTOXY, and Mem0.
 
+## New: ad intelligence research
+- [Advertising intelligence sources and MCPs](docs/AD_INTELLIGENCE.md) including Google/YouTube creative retrieval, Meta's official Ad Library and limits of advertiser targeting data.
+- [Ad transparency skill requirements](skills/ad-transparency/SKILL.md) (research scaffold; not installed).
+
 ## Verified context
 - Local repo: `/home/jq/Desktop/osintnet`
 - Remote: https://github.com/joeyqleq/osintnet.git
